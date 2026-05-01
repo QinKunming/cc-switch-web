@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CC Switch Web</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#232635;--border:#2e3245;--text:#e4e6f0;--text2:#8b8fa3;--primary:#6c5ce7;--primary-hover:#7c6ff7;--success:#00b894;--danger:#e74c3c;--danger-hover:#c0392b;--warning:#fdcb6e}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);height:100vh}
+a{color:var(--primary);text-decoration:none}
+
+/* Login Page */
+.login-page{display:flex;align-items:center;justify-content:center;height:100vh}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:40px;width:380px}
+.login-box h1{text-align:center;font-size:22px;margin-bottom:8px;color:var(--primary)}
+.login-box .subtitle{text-align:center;font-size:13px;color:var(--text2);margin-bottom:28px}
+.login-box .form-group{margin-bottom:16px}
+.login-box label{display:block;font-size:13px;color:var(--text2);margin-bottom:6px;font-weight:500}
+.login-box input[type=text],.login-box input[type=password]{width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px;outline:none}
+.login-box input:focus{border-color:var(--primary)}
+.captcha-row{display:flex;gap:10px;align-items:center}
+.captcha-row input{flex:1}
+.captcha-display{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 16px;font-size:15px;font-weight:700;color:var(--warning);white-space:nowrap;cursor:pointer;min-width:120px;text-align:center;user-select:none}
+.captcha-display:hover{border-color:var(--text2)}
+.login-btn{width:100%;padding:12px;border:none;border-radius:6px;background:var(--primary);color:#fff;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px}
+.login-btn:hover{background:var(--primary-hover)}
+.login-btn:disabled{opacity:.5;cursor:not-allowed}
+.login-error{color:var(--danger);font-size:12px;margin-top:8px;text-align:center;min-height:18px}
+
+/* Main App (hidden until auth) */
+.app{display:none;height:100vh;flex-direction:column}
+.app.visible{display:flex}
+
+/* Status Bar */
+.status-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:16px;font-size:13px}
+.status-bar .logo{font-weight:700;font-size:15px;color:var(--primary)}
+.status-bar .sep{color:var(--border)}
+.status-bar .agent-badge{background:var(--primary);color:#fff;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:600}
+.status-bar .current-info{color:var(--text2)}
+.status-bar .current-info strong{color:var(--success)}
+.logout-btn{background:none;border:1px solid var(--border);color:var(--text2);padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px}
+.logout-btn:hover{border-color:var(--text);color:var(--text)}
+
+/* Main Layout */
+.main{display:flex;flex:1;overflow:hidden}
+
+/* Sidebar */
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px 0;overflow-y:auto}
+.sidebar h3{padding:0 16px 12px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text2)}
+.agent-btn{display:flex;align-items:center;gap:10px;padding:12px 20px;border:none;background:none;color:var(--text);font-size:14px;cursor:pointer;text-align:left;width:100%;transition:background .15s}
+.agent-btn:hover{background:var(--surface2)}
+.agent-btn.active{background:var(--surface2);border-right:3px solid var(--primary);color:var(--primary);font-weight:600}
+.agent-btn.disabled{opacity:.4;cursor:not-allowed}
+.agent-btn .agent-icon{font-size:20px}
+.agent-btn .agent-badge-new{font-size:10px;background:var(--warning);color:#000;padding:1px 6px;border-radius:3px;margin-left:auto}
+
+/* Content */
+.content{flex:1;padding:24px;overflow-y:auto}
+.content-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.content-header h2{font-size:20px;font-weight:600}
+.actions{display:flex;gap:8px}
+
+/* Buttons */
+.btn{padding:8px 16px;border-radius:6px;border:none;font-size:13px;cursor:pointer;font-weight:500;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-hover)}
+.btn-success{background:var(--success);color:#fff}
+.btn-success:hover{opacity:.9}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover{background:var(--danger-hover)}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border)}
+.btn-outline:hover{border-color:var(--text2);background:var(--surface2)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* Provider Cards */
+.provider-list{display:flex;flex-direction:column;gap:8px}
+.provider-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 20px;display:flex;align-items:center;gap:16px;transition:border-color .15s}
+.provider-card:hover{border-color:var(--text2)}
+.provider-card.current{border-color:var(--success);background:rgba(0,184,148,.05)}
+.provider-card .p-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0}
+.provider-card .p-info{flex:1;min-width:0}
+.provider-card .p-name{font-weight:600;font-size:14px;margin-bottom:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.provider-card .p-meta{font-size:12px;color:var(--text2);display:flex;gap:12px;flex-wrap:wrap}
+.provider-card .p-meta span{display:inline-flex;align-items:center;gap:4px}
+.provider-card .p-actions{display:flex;gap:6px;flex-shrink:0}
+.badge{font-size:11px;padding:2px 8px;border-radius:4px;background:var(--surface2);color:var(--text2)}
+.badge.current{background:rgba(0,184,148,.15);color:var(--success)}
+.badge.cat-official{background:rgba(108,92,231,.15);color:var(--primary)}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:100}
+.modal-overlay.hidden{display:none}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;width:640px;max-width:95vw;max-height:85vh;display:flex;flex-direction:column}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-header h3{font-size:16px}
+.modal-body{padding:20px;overflow-y:auto;flex:1}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+.close-btn{background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer}
+.close-btn:hover{color:var(--text)}
+
+/* Form */
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:13px;color:var(--text2);margin-bottom:6px;font-weight:500}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;outline:none}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--primary)}
+.form-group textarea{font-family:'Cascadia Code','Fira Code',monospace;min-height:120px;resize:vertical}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* Preset Grid */
+.preset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.preset-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;cursor:pointer;transition:all .15s}
+.preset-card:hover{border-color:var(--primary);transform:translateY(-1px)}
+.preset-card .pc-name{font-size:13px;font-weight:600;margin-bottom:4px}
+.preset-card .pc-cat{font-size:11px;color:var(--text2)}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:8px;font-size:13px;z-index:200;animation:slideIn .3s ease}
+.toast.success{background:var(--success);color:#fff}
+.toast.error{background:var(--danger);color:#fff}
+@keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* Empty state */
+.empty{text-align:center;padding:60px 20px;color:var(--text2)}
+.empty .empty-icon{font-size:48px;margin-bottom:16px;opacity:.3}
+.empty p{margin-bottom:16px}
+
+/* Coming soon */
+.coming-soon{text-align:center;padding:80px 20px;color:var(--text2)}
+.coming-soon .cs-icon{font-size:64px;margin-bottom:20px;opacity:.3}
+.coming-soon h3{font-size:18px;margin-bottom:8px;color:var(--text)}
+.coming-soon p{font-size:13px}
+
+/* Model entry for OpenClaw */
+.model-entry{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:8px}
+.model-entry .me-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.model-entry .me-header span{font-size:12px;color:var(--text2)}
+.input-dd-wrap{position:relative}
+.fetch-btn{font-size:11px;padding:2px 10px;background:var(--primary);border:none;border-radius:4px;color:#fff;cursor:pointer;margin-left:8px;font-weight:500}
+.fetch-btn:hover{background:var(--primary-hover)}
+.model-dropdown{position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:6px;max-height:220px;overflow-y:auto;z-index:50;margin-top:2px;display:none;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.model-dropdown.show{display:block}
+.model-dropdown-item{padding:8px 12px;cursor:pointer;font-size:12px;color:var(--text);border-bottom:1px solid var(--border)}
+.model-dropdown-item:hover{background:var(--surface2);color:var(--primary)}
+.model-dropdown-item:last-child{border-bottom:none}
+.model-dropdown-empty{padding:12px;text-align:center;color:var(--text2);font-size:12px}
+</style>
+</head>
+<body>
+
+<!-- Login Page -->
+<div id="loginPage" class="login-page">
+  <div class="login-box">
+    <h1>CC Switch Web</h1>
+    <div class="subtitle">AI Agent Model Manager</div>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="loginUser" placeholder="admin" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password">
+    </div>
+    <div class="form-group">
+      <label>Captcha</label>
+      <div class="captcha-row">
+        <input type="text" id="loginCaptcha" placeholder="Answer">
+        <div class="captcha-display" id="captchaQuestion" onclick="refreshCaptcha()">Loading...</div>
+      </div>
+    </div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">Login</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- Main App -->
+<div id="appContainer" class="app">
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <span class="logo">CC Switch Web</span>
+    <span class="sep">|</span>
+    <span id="statusAgent" class="agent-badge">Claude Code</span>
+    <span id="statusCurrent" class="current-info">Loading...</span>
+    <span style="flex:1"></span>
+    <span style="font-size:12px;color:var(--text2)" id="networkInfo"></span>
+    <button class="logout-btn" onclick="doLogout()">Logout</button>
+  </div>
+
+  <!-- Main Layout -->
+  <div class="main">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <h3>Agent</h3>
+      <div id="agentList"></div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <div class="content-header">
+        <h2 id="contentTitle">Claude Code Providers</h2>
+        <div class="actions" id="contentActions">
+          <button class="btn btn-outline btn-sm" onclick="showPresets()">📦 Preset</button>
+          <button class="btn btn-outline btn-sm" onclick="importLive()">📥 Import</button>
+          <button class="btn btn-primary btn-sm" onclick="showAddForm()">+ Add</button>
+        </div>
+      </div>
+      <div id="providerList" class="provider-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div id="formModal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header"><h3 id="formTitle">Add Provider</h3><button class="close-btn" onclick="closeModal('formModal')">&times;</button></div>
+    <div class="modal-body" id="formBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('formModal')">Cancel</button>
+      <button class="btn btn-primary" id="formSaveBtn" onclick="saveProvider()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Presets Modal -->
+<div id="presetModal" class="modal-overlay hidden">
+  <div class="modal" style="width:720px">
+    <div class="modal-header"><h3>Select Preset</h3><button class="close-btn" onclick="closeModal('presetModal')">&times;</button></div>
+    <div class="modal-body"><div id="presetGrid" class="preset-grid"></div></div>
+  </div>
+</div>
+
+<!-- API Key Modal -->
+<div id="apiKeyModal" class="modal-overlay hidden">
+  <div class="modal" style="width:400px">
+    <div class="modal-header"><h3 id="akTitle">Enter API Key</h3><button class="close-btn" onclick="closeModal('apiKeyModal')">&times;</button></div>
+    <div class="modal-body"><div class="form-group"><label>API Key</label><input type="text" id="akInput" placeholder="sk-..."></div></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('apiKeyModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmPresetApply()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentApp = 'claude';
+let editingId = null;
+let pendingPresetId = null;
+let presets = [];
+let agentsData = [];
+let _cachedModels = null;
+let _cachedBaseUrl = '';
+
+// --- Auth ---
+async function checkAuth() {
+  try {
+    const r = await fetch('/api/check-auth');
+    const d = await r.json();
+    if (d.authenticated) {
+      showApp();
+    } else {
+      showLogin();
+    }
+  } catch { showLogin(); }
+}
+
+function showLogin() {
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('appContainer').classList.remove('visible');
+  refreshCaptcha();
+}
+
+function showApp() {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('appContainer').classList.add('visible');
+  initApp();
+}
+
+async function refreshCaptcha() {
+  try {
+    const r = await fetch('/api/captcha');
+    const d = await r.json();
+    document.getElementById('captchaQuestion').textContent = d.question;
+    document.getElementById('captchaQuestion').dataset.id = d.captcha_id;
+  } catch {}
+}
+
+async function doLogin() {
+  const btn = document.getElementById('loginBtn');
+  const errEl = document.getElementById('loginError');
+  btn.disabled = true;
+  errEl.textContent = '';
+  try {
+    const r = await fetch('/api/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        username: document.getElementById('loginUser').value,
+        password: document.getElementById('loginPass').value,
+        captcha_id: document.getElementById('captchaQuestion').dataset.id,
+        captcha_answer: document.getElementById('loginCaptcha').value,
+      }),
+    });
+    if (!r.ok) {
+      const d = await r.json();
+      errEl.textContent = d.detail || 'Login failed';
+      refreshCaptcha();
+      document.getElementById('loginCaptcha').value = '';
+      return;
+    }
+    showApp();
+  } catch (e) { errEl.textContent = 'Network error'; }
+  finally { btn.disabled = false; }
+}
+
+async function doLogout() {
+  await fetch('/api/logout', { method: 'POST' });
+  showLogin();
+}
+
+// --- API ---
+async function api(path, opts = {}) {
+  const res = await fetch(path, opts);
+  if (res.status === 401) { showLogin(); throw new Error('Session expired'); }
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || res.statusText);
+  }
+  return res.json();
+}
+
+// --- Init ---
+async function initApp() {
+  try {
+    const health = await fetch('/api/health').then(r => r.json());
+    const ip = health.local_ip || 'localhost';
+    document.getElementById('networkInfo').textContent = `http://${ip}:8787`;
+  } catch {}
+  await loadAgents();
+  loadProviders();
+}
+
+async function loadAgents() {
+  try {
+    agentsData = await api('/api/agents');
+    const list = document.getElementById('agentList');
+    list.innerHTML = agentsData.map(a => {
+      const disabled = !a.configurable;
+      return `<button class="agent-btn ${a.id === currentApp ? 'active' : ''} ${disabled ? 'disabled' : ''}"
+        data-app="${a.id}" ${disabled ? '' : `onclick="switchAgent('${a.id}')"`}>
+        <span class="agent-icon">${a.icon}</span> ${a.name}
+        ${disabled ? '<span class="agent-badge-new">Soon</span>' : ''}
+      </button>`;
+    }).join('');
+  } catch {}
+}
+
+function switchAgent(app) {
+  currentApp = app;
+  document.querySelectorAll('.agent-btn').forEach(b => b.classList.toggle('active', b.dataset.app === app));
+  const agent = agentsData.find(a => a.id === app);
+  document.getElementById('statusAgent').textContent = agent ? agent.name : app;
+  document.getElementById('contentTitle').textContent = (agent ? agent.name : app) + ' Providers';
+  document.getElementById('contentActions').style.display = 'block';
+  editingId = null;
+  loadProviders();
+}
+
+// --- Load providers ---
+async function loadProviders() {
+  const list = document.getElementById('providerList');
+  list.innerHTML = '<div class="empty"><div class="empty-icon" style="font-size:24px;opacity:1"><div class="spinner" style="margin:0 auto"></div></div></div>';
+  try {
+    const [providers, current] = await Promise.all([
+      api(`/api/providers?app=${currentApp}`),
+      api(`/api/current?app=${currentApp}`)
+    ]);
+    const currentId = current.current?.id;
+    updateStatusBar(current.current);
+    if (providers.length === 0) {
+      list.innerHTML = '<div class="empty"><div class="empty-icon">📦</div><p>No providers yet</p><button class="btn btn-primary" onclick="showPresets()">Import from preset</button></div>';
+      return;
+    }
+    list.innerHTML = providers.map(p => renderCard(p, p.id === currentId)).join('');
+  } catch (e) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><p>${esc(e.message)}</p></div>`;
+  }
+}
+
+function renderCard(p, isCurrent) {
+  const catBadge = p.category ? `<span class="badge cat-official">${esc(p.category)}</span>` : '';
+  const currentBadge = isCurrent ? '<span class="badge current">Active</span>' : '';
+  const meta = [];
+  if (currentApp === 'claude') {
+    const env = p.settings_config?.env || {};
+    if (env.ANTHROPIC_BASE_URL) meta.push(`<span>🌐 ${truncate(env.ANTHROPIC_BASE_URL,40)}</span>`);
+    if (env.ANTHROPIC_MODEL) meta.push(`<span>🧠 ${esc(env.ANTHROPIC_MODEL)}</span>`);
+    if (env.ANTHROPIC_AUTH_TOKEN) meta.push(`<span>🔑 ${truncate(env.ANTHROPIC_AUTH_TOKEN,12)}</span>`);
+  } else {
+    if (p.settings_config?.baseUrl) meta.push(`<span>🌐 ${truncate(p.settings_config.baseUrl,40)}</span>`);
+    if (p.settings_config?.api) meta.push(`<span>📡 ${esc(p.settings_config.api)}</span>`);
+    const models = p.settings_config?.models || [];
+    if (models.length) meta.push(`<span>🧠 ${models.length} model(s)</span>`);
+  }
+  const iconBg = p.icon_color || 'var(--primary)';
+  return `<div class="provider-card ${isCurrent?'current':''}">
+    <div class="p-icon" style="background:${iconBg}22;color:${iconBg}">${(p.name||'?')[0].toUpperCase()}</div>
+    <div class="p-info">
+      <div class="p-name">${esc(p.name)} ${currentBadge} ${catBadge}</div>
+      <div class="p-meta">${meta.join('')}</div>
+    </div>
+    <div class="p-actions">
+      ${isCurrent?'':`<button class="btn btn-success btn-sm" onclick="doSwitch('${p.id}')">Switch</button>`}
+      <button class="btn btn-outline btn-sm" onclick="showEditForm('${p.id}')">Edit</button>
+      ${isCurrent?'':`<button class="btn btn-danger btn-sm" onclick="doDelete('${p.id}','${esc(p.name)}')">Delete</button>`}
+    </div>
+  </div>`;
+}
+
+function updateStatusBar(current) {
+  document.getElementById('statusCurrent').innerHTML = !current
+    ? 'No active provider'
+    : `Current: <strong>${esc(current.name)}</strong>`;
+}
+
+// --- Switch / Delete ---
+async function doSwitch(id) {
+  try {
+    const r = await api(`/api/switch?app=${currentApp}&id=${id}`, { method: 'POST' });
+    toast(r.message, 'success'); loadProviders();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function doDelete(id, name) {
+  if (!confirm(`Delete provider "${name}"?`)) return;
+  try {
+    await api(`/api/providers/${id}?app=${currentApp}`, { method: 'DELETE' });
+    toast('Deleted', 'success'); loadProviders();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// --- Add/Edit Form ---
+function showAddForm() {
+  editingId = null;
+  _cachedModels = null;
+  _cachedBaseUrl = '';
+  document.getElementById('formTitle').textContent = 'Add Provider';
+  document.getElementById('formSaveBtn').textContent = 'Add';
+  renderForm(currentApp === 'claude' ? claudeFormHtml() : openclawFormHtml());
+  showModal('formModal');
+}
+
+async function showEditForm(id) {
+  try {
+    const p = await api(`/api/providers/${id}?app=${currentApp}`);
+    editingId = id;
+    _cachedModels = null;
+    _cachedBaseUrl = '';
+    document.getElementById('formTitle').textContent = 'Edit Provider';
+    document.getElementById('formSaveBtn').textContent = 'Save';
+    renderForm(currentApp === 'claude' ? claudeFormHtml(p) : openclawFormHtml(p));
+    showModal('formModal');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function claudeFormHtml(p = null) {
+  const env = p?.settings_config?.env || {};
+  return `
+    <div class="form-group"><label>Name</label><input id="f_name" value="${esc(p?.name||'')}"></div>
+    <div class="form-group"><label>Provider ID</label><input id="f_id" value="${esc(p?.id||'')}" ${p?'disabled':''}></div>
+    <div class="form-group"><label>Base URL</label><input id="f_base_url" value="${esc(env.ANTHROPIC_BASE_URL||'')}" placeholder="https://api.anthropic.com"></div>
+    <div class="form-group"><label>API Key</label><input id="f_api_key" type="password" value="${esc(env.ANTHROPIC_AUTH_TOKEN||'')}" placeholder="sk-..."></div>
+    <div class="form-row">
+      <div class="form-group"><label>Model <button type="button" class="fetch-btn" onclick="fetchAndShow('f_model')">获取</button></label><div class="input-dd-wrap"><input id="f_model" value="${esc(env.ANTHROPIC_MODEL||'')}" placeholder="claude-sonnet-4-20250514"><div class="model-dropdown" id="dd_f_model"></div></div></div>
+      <div class="form-group"><label>Category</label><input id="f_category" value="${esc(p?.category||'custom')}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Haiku <button type="button" class="fetch-btn" onclick="fetchAndShow('f_haiku')">获取</button></label><div class="input-dd-wrap"><input id="f_haiku" value="${esc(env.ANTHROPIC_DEFAULT_HAIKU_MODEL||'')}"><div class="model-dropdown" id="dd_f_haiku"></div></div></div>
+      <div class="form-group"><label>Sonnet <button type="button" class="fetch-btn" onclick="fetchAndShow('f_sonnet')">获取</button></label><div class="input-dd-wrap"><input id="f_sonnet" value="${esc(env.ANTHROPIC_DEFAULT_SONNET_MODEL||'')}"><div class="model-dropdown" id="dd_f_sonnet"></div></div></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Opus <button type="button" class="fetch-btn" onclick="fetchAndShow('f_opus')">获取</button></label><div class="input-dd-wrap"><input id="f_opus" value="${esc(env.ANTHROPIC_DEFAULT_OPUS_MODEL||'')}"><div class="model-dropdown" id="dd_f_opus"></div></div></div>
+      <div class="form-group"><label>Website</label><input id="f_website" value="${esc(p?.website_url||'')}"></div>
+    </div>
+    <div class="form-group"><label>Raw settings_config JSON</label><textarea id="f_raw">${esc(JSON.stringify(p?.settings_config||{env:{}},null,2))}</textarea></div>`;
+}
+
+function openclawFormHtml(p = null) {
+  const sc = p?.settings_config || {};
+  const models = sc.models || [{ id: '', name: '' }];
+  return `
+    <div class="form-group"><label>Name</label><input id="f_name" value="${esc(p?.name||'')}"></div>
+    <div class="form-group"><label>Provider ID</label><input id="f_id" value="${esc(p?.id||'')}" ${p?'disabled':''}></div>
+    <div class="form-row">
+      <div class="form-group"><label>Base URL</label><input id="f_base_url" value="${esc(sc.baseUrl||'')}" placeholder="https://api.example.com/v1"></div>
+      <div class="form-group"><label>API Key</label><input id="f_api_key" type="password" value="${esc(sc.apiKey||'')}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>API Protocol</label>
+        <select id="f_api">
+          <option value="openai-completions" ${sc.api==='openai-completions'?'selected':''}>OpenAI Completions</option>
+          <option value="openai-responses" ${sc.api==='openai-responses'?'selected':''}>OpenAI Responses</option>
+          <option value="anthropic-messages" ${sc.api==='anthropic-messages'?'selected':''}>Anthropic Messages</option>
+          <option value="google-generative-ai" ${sc.api==='google-generative-ai'?'selected':''}>Google Generative AI</option>
+          <option value="bedrock-converse-stream" ${sc.api==='bedrock-converse-stream'?'selected':''}>AWS Bedrock</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Category</label><input id="f_category" value="${esc(p?.category||'custom')}"></div>
+    </div>
+    <div class="form-group" style="position:relative"><label>Models <button type="button" class="fetch-btn" onclick="fetchAndShowOc()">获取模型</button></label>
+      <div id="modelsContainer">${models.map((m,i)=>modelEntryHtml(m,i)).join('')}</div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-outline btn-sm" onclick="addModelEntry()">+ Add Model</button>
+      </div>
+      <div class="model-dropdown" id="dd_oc_models"></div>
+    </div>
+    <div class="form-group"><label>Website</label><input id="f_website" value="${esc(p?.website_url||'')}"></div>`;
+}
+
+function modelEntryHtml(m,i) {
+  return `<div class="model-entry" data-idx="${i}">
+    <div class="me-header"><span>Model #${i+1}</span><button class="btn btn-danger btn-sm" onclick="this.closest('.model-entry').remove()">Remove</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Model ID</label><input class="me-id" value="${esc(m.id||'')}"></div>
+      <div class="form-group"><label>Display Name</label><input class="me-name" value="${esc(m.name||'')}"></div>
+    </div>
+    <div class="form-group"><label>Context Window</label><input class="me-cw" type="number" value="${m.contextWindow||''}"></div>
+    </div>`;
+}
+
+function addModelEntry() {
+  const c = document.getElementById('modelsContainer');
+  c.insertAdjacentHTML('beforeend', modelEntryHtml({id:'',name:''}, c.children.length));
+}
+
+function collectClaudeFormData() {
+  const id = document.getElementById('f_id').value.trim();
+  const name = document.getElementById('f_name').value.trim();
+  if (!id || !name) throw new Error('ID and Name are required');
+  let config;
+  try { config = JSON.parse(document.getElementById('f_raw')?.value || '{}'); } catch { config = {env:{}}; }
+  const env = config.env || {};
+  const baseUrl = document.getElementById('f_base_url').value.trim();
+  const apiKey = document.getElementById('f_api_key').value;
+  const model = document.getElementById('f_model').value.trim();
+  const haiku = document.getElementById('f_haiku').value.trim();
+  const sonnet = document.getElementById('f_sonnet').value.trim();
+  const opus = document.getElementById('f_opus').value.trim();
+  if (baseUrl) env.ANTHROPIC_BASE_URL = baseUrl;
+  if (apiKey) env.ANTHROPIC_AUTH_TOKEN = apiKey;
+  if (model) env.ANTHROPIC_MODEL = model;
+  if (haiku) env.ANTHROPIC_DEFAULT_HAIKU_MODEL = haiku;
+  if (sonnet) env.ANTHROPIC_DEFAULT_SONNET_MODEL = sonnet;
+  if (opus) env.ANTHROPIC_DEFAULT_OPUS_MODEL = opus;
+  config.env = env;
+  return { id, name, settings_config: config, category: document.getElementById('f_category').value.trim()||null, website_url: document.getElementById('f_website').value.trim()||null };
+}
+
+function collectOpenclawFormData() {
+  const id = document.getElementById('f_id').value.trim();
+  const name = document.getElementById('f_name').value.trim();
+  if (!id || !name) throw new Error('ID and Name are required');
+  const config = { baseUrl: document.getElementById('f_base_url').value.trim(), apiKey: document.getElementById('f_api_key').value, api: document.getElementById('f_api').value, models: [] };
+  document.querySelectorAll('.model-entry').forEach(el => {
+    const mid = el.querySelector('.me-id').value.trim();
+    if (!mid) return;
+    const m = { id: mid };
+    const mn = el.querySelector('.me-name').value.trim(); if (mn) m.name = mn;
+    const cw = parseInt(el.querySelector('.me-cw').value); if (cw) m.contextWindow = cw;
+    config.models.push(m);
+  });
+  return { id, name, settings_config: config, category: document.getElementById('f_category').value.trim()||null, website_url: document.getElementById('f_website').value.trim()||null };
+}
+
+async function saveProvider() {
+  try {
+    const data = currentApp === 'claude' ? collectClaudeFormData() : collectOpenclawFormData();
+    if (editingId) {
+      await api(`/api/providers/${editingId}?app=${currentApp}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+      toast('Updated', 'success');
+    } else {
+      await api(`/api/providers?app=${currentApp}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+      toast('Added', 'success');
+    }
+    closeModal('formModal'); loadProviders();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// --- Model Fetch ---
+async function fetchAndShow(inputId) {
+  const baseUrl = document.getElementById('f_base_url')?.value?.trim();
+  const apiKey = document.getElementById('f_api_key')?.value?.trim();
+  if (!baseUrl || !apiKey) { toast('请先填写 Base URL 和 API Key', 'error'); return; }
+  const dd = document.getElementById('dd_' + inputId);
+  if (!dd) return;
+  if (dd.classList.contains('show')) { dd.classList.remove('show'); return; }
+  document.querySelectorAll('.model-dropdown.show').forEach(d => { if (d !== dd) d.classList.remove('show'); });
+  if (!_cachedModels || _cachedBaseUrl !== baseUrl) {
+    dd.innerHTML = '<div class="model-dropdown-empty">Loading...</div>';
+    dd.classList.add('show');
+    try {
+      const r = await api('/api/fetch-models', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ base_url: baseUrl, api_key: apiKey }),
+      });
+      _cachedModels = r.models || [];
+      _cachedBaseUrl = baseUrl;
+    } catch (e) {
+      dd.innerHTML = '<div class="model-dropdown-empty">' + esc(e.message) + '</div>';
+      return;
+    }
+  }
+  if (!_cachedModels.length) {
+    dd.innerHTML = '<div class="model-dropdown-empty">No models found</div>';
+    dd.classList.add('show');
+    return;
+  }
+  dd.innerHTML = _cachedModels.map((m, i) =>
+    '<div class="model-dropdown-item" data-idx="' + i + '" data-target="' + inputId + '">' + esc(m) + '</div>'
+  ).join('');
+  dd.classList.add('show');
+}
+
+async function fetchAndShowOc() {
+  const baseUrl = document.getElementById('f_base_url')?.value?.trim();
+  const apiKey = document.getElementById('f_api_key')?.value?.trim();
+  if (!baseUrl || !apiKey) { toast('请先填写 Base URL 和 API Key', 'error'); return; }
+  const dd = document.getElementById('dd_oc_models');
+  if (!dd) return;
+  if (dd.classList.contains('show')) { dd.classList.remove('show'); return; }
+  document.querySelectorAll('.model-dropdown.show').forEach(d => { if (d !== dd) d.classList.remove('show'); });
+  if (!_cachedModels || _cachedBaseUrl !== baseUrl) {
+    dd.innerHTML = '<div class="model-dropdown-empty">Loading...</div>';
+    dd.classList.add('show');
+    try {
+      const r = await api('/api/fetch-models', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ base_url: baseUrl, api_key: apiKey }),
+      });
+      _cachedModels = r.models || [];
+      _cachedBaseUrl = baseUrl;
+    } catch (e) {
+      dd.innerHTML = '<div class="model-dropdown-empty">' + esc(e.message) + '</div>';
+      return;
+    }
+  }
+  const existing = new Set();
+  document.querySelectorAll('.model-entry .me-id').forEach(el => { const v = el.value.trim(); if (v) existing.add(v); });
+  dd.innerHTML = _cachedModels.map((m, i) => {
+    const added = existing.has(m);
+    return '<div class="model-dropdown-item" data-idx="' + i + '" data-target="oc"' + (added ? ' style="opacity:.4"' : '') + '>' + esc(m) + (added ? ' (added)' : '') + '</div>';
+  }).join('');
+  dd.classList.add('show');
+}
+
+document.addEventListener('click', e => {
+  const item = e.target.closest('.model-dropdown-item');
+  if (item && _cachedModels) {
+    const idx = parseInt(item.dataset.idx);
+    const target = item.dataset.target;
+    if (idx >= 0 && idx < _cachedModels.length) {
+      if (target === 'oc') {
+        const c = document.getElementById('modelsContainer');
+        c.insertAdjacentHTML('beforeend', modelEntryHtml({id: _cachedModels[idx], name: ''}, c.children.length));
+        item.style.opacity = '.4';
+        item.textContent = _cachedModels[idx] + ' (added)';
+      } else {
+        const input = document.getElementById(target);
+        if (input) input.value = _cachedModels[idx];
+      }
+    }
+    item.closest('.model-dropdown').classList.remove('show');
+    return;
+  }
+  if (!e.target.closest('.model-dropdown') && !e.target.closest('.fetch-btn')) {
+    document.querySelectorAll('.model-dropdown.show').forEach(d => d.classList.remove('show'));
+  }
+});
+
+// --- Presets ---
+async function showPresets() {
+  try {
+    presets = await api(`/api/presets?app=${currentApp}`);
+    const grid = document.getElementById('presetGrid');
+    grid.innerHTML = presets.map(p => `<div class="preset-card" onclick="selectPreset('${p.id}')"><div class="pc-name">${esc(p.name)}</div><div class="pc-cat">${esc(p.category||'')}</div></div>`).join('');
+    showModal('presetModal');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function selectPreset(id) {
+  closeModal('presetModal');
+  pendingPresetId = id;
+  const preset = presets.find(p => p.id === id);
+  document.getElementById('akTitle').textContent = `API Key for ${preset?.name||id}`;
+  document.getElementById('akInput').value = '';
+  showModal('apiKeyModal');
+}
+
+async function confirmPresetApply() {
+  const key = document.getElementById('akInput').value.trim();
+  try {
+    await api(`/api/presets/apply?app=${currentApp}&id=${pendingPresetId}${key?'&api_key='+encodeURIComponent(key):''}`, { method:'POST' });
+    toast('Preset applied', 'success');
+    closeModal('apiKeyModal'); loadProviders();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// --- Import ---
+async function importLive() {
+  try {
+    const r = await api(`/api/import-live?app=${currentApp}`, { method:'POST' });
+    toast(r.imported ? `Imported ${r.imported} provider(s)` : 'Imported', 'success');
+    loadProviders();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// --- Modal / Toast / Utils ---
+function showModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+function renderForm(html) { document.getElementById('formBody').innerHTML = html; }
+function toast(msg, type='success') {
+  const el = document.createElement('div'); el.className = `toast ${type}`; el.textContent = msg;
+  document.body.appendChild(el); setTimeout(() => el.remove(), 3000);
+}
+function esc(s) { const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; }
+function truncate(s, n) { return (s||'').length > n ? s.slice(0,n)+'...' : s||''; }
+
+// --- Keyboard shortcut for login ---
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('loginPage').style.display !== 'none') {
+    doLogin();
+  }
+});
+
+// --- Bootstrap ---
+checkAuth();
+</script>
+</body>
+</html>
