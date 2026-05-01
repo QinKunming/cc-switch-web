@@ -1,4 +1,4 @@
-# CC Switch Web
+# cc-witch-web
 
 ## 痛点：
 
