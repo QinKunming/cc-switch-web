@@ -1,0 +1,271 @@
+"""OpenClaw provider presets (converted from cc-switch TypeScript)."""
+
+OPENCLAW_API_PROTOCOLS = [
+    {"value": "openai-completions", "label": "OpenAI Completions"},
+    {"value": "openai-responses", "label": "OpenAI Responses"},
+    {"value": "anthropic-messages", "label": "Anthropic Messages"},
+    {"value": "google-generative-ai", "label": "Google Generative AI"},
+    {"value": "bedrock-converse-stream", "label": "AWS Bedrock"},
+]
+
+OPENCLAW_PRESETS = [
+    {
+        "id": "openai-compatible",
+        "name": "OpenAI Compatible",
+        "category": "custom",
+        "website_url": None,
+        "icon": "generic",
+        "icon_color": None,
+        "settings_config": {
+            "baseUrl": "",
+            "apiKey": "",
+            "api": "openai-completions",
+            "models": [],
+        },
+        "suggested_defaults": None,
+    },
+    {
+        "id": "deepseek",
+        "name": "DeepSeek",
+        "category": "cn_official",
+        "website_url": "https://platform.deepseek.com",
+        "icon": "deepseek",
+        "icon_color": "#1E88E5",
+        "settings_config": {
+            "baseUrl": "https://api.deepseek.com",
+            "apiKey": "",
+            "api": "openai-completions",
+            "models": [
+                {"id": "deepseek-v4-pro", "name": "DeepSeek V4 Pro"},
+                {"id": "deepseek-v4-flash", "name": "DeepSeek V4 Flash"},
+                {"id": "deepseek-chat", "name": "DeepSeek Chat"},
+            ],
+        },
+        "suggested_defaults": {
+            "model": {"primary": "deepseek/deepseek-v4-pro", "fallbacks": ["deepseek/deepseek-v4-flash"]},
+        },
+    },
+    {
+        "id": "zhipu-glm",
+        "name": "Zhipu GLM",
+        "category": "cn_official",
+        "website_url": "https://open.bigmodel.cn",
+        "icon": "zhipu",
+        "icon_color": "#0F62FE",
+        "settings_config": {
+            "baseUrl": "https://open.bigmodel.cn/api/paas/v4",
+            "apiKey": "",
+            "api": "openai-completions",
+            "models": [
+                {"id": "glm-5.1", "name": "GLM-5.1"},
+                {"id": "glm-5", "name": "GLM-5"},
+                {"id": "glm-4.7", "name": "GLM-4.7"},
+            ],
+        },
+        "suggested_defaults": {
+            "model": {"primary": "zhipu-glm/glm-5.1", "fallbacks": ["zhipu-glm/glm-5"]},
+        },
+    },
+    {
+        "id": "qwen-coder",
+        "name": "Qwen Coder",
+        "category": "cn_official",
+        "website_url": "https://bailian.console.aliyun.com",
+        "icon": "qwen",
+        "icon_color": None,
+        "settings_config": {
+            "baseUrl": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+            "apiKey": "",
+            "api": "openai-completions",
+            "models": [
+                {"id": "qwen3-coder-plus", "name": "Qwen3 Coder Plus"},
+                {"id": "qwen3-coder-flash", "name": "Qwen3 Coder Flash"},
+                {"id": "qwen3-coder-next", "name": "Qwen3 Coder Next"},
+            ],
+        },
+        "suggested_defaults": {
+            "model": {"primary": "qwen-coder/qwen3-coder-plus", "fallbacks": ["qwen-coder/qwen3-coder-flash"]},
+        },
+    },
+    {
+        "id": "kimi",
+        "name": "Kimi K2.6",
+        "category": "cn_official",
+        "website_url": "https://platform.moonshot.cn",
+        "icon": "kimi",
+        "icon_color": None,
+        "settings_config": {
+            "baseUrl": "https://api.moonshot.cn/v1",
+            "apiKey": "",
+            "api": "openai-completions",
+            "models": [
+                {"id": "kimi-k2.6", "name": "Kimi K2.6"},
+                {"id": "kimi-k2.5", "name": "Kimi K2.5"},
+                {"id": "kimi-k2-turbo", "name": "Kimi K2 Turbo"},
+            ],
+        },
+        "suggested_defaults": {
+            "model": {"primary": "kimi/kimi-k2.6", "fallbacks": ["kimi/kimi-k2.5"]},
+        },
+    },
+    {
+        "id": "stepfun",
+        "name": "StepFun",
+        "category": "cn_official",
+        "website_url": "https://platform.stepfun.com",
+        "icon": "stepfun",
+        "icon_color": None,
+        "settings_config": {
+            "baseUrl": "https://api.stepfun.com/v1",
+            "apiKey": "",
+            "api": "openai-completions",
+            "models": [
+                {"id": "step-3.5-flash", "name": "Step 3.5 Flash"},
+            ],
+        },
+        "suggested_defaults": {
+            "model": {"primary": "stepfun/step-3.5-flash"},
+        },
+    },
+    {
+        "id": "minimax",
+        "name": "MiniMax",
+        "category": "cn_official",
+        "website_url": "https://platform.minimax.io",
+        "icon": "minimax",
+        "icon_color": None,
+        "settings_config": {
+            "baseUrl": "https://api.minimax.chat/v1",
+            "apiKey": "",
+            "api": "openai-completions",
+            "models": [
+                {"id": "minimax-m2.7", "name": "MiniMax M2.7"},
+                {"id": "minimax-m2.7-highspeed", "name": "MiniMax M2.7 Highspeed"},
+                {"id": "minimax-m2.5", "name": "MiniMax M2.5"},
+            ],
+        },
+        "suggested_defaults": {
+            "model": {"primary": "minimax/minimax-m2.7", "fallbacks": ["minimax/minimax-m2.7-highspeed"]},
+        },
+    },
+    {
+        "id": "doubao-seed",
+        "name": "DouBao Seed",
+        "category": "cn_official",
+        "website_url": "https://console.volcengine.com/ark",
+        "icon": "doubao",
+        "icon_color": None,
+        "settings_config": {
+            "baseUrl": "https://ark.cn-beijing.volces.com/api/v3",
+            "apiKey": "",
+            "api": "openai-completions",
+            "models": [
+                {"id": "doubao-seed-code", "name": "Doubao Seed Code"},
+            ],
+        },
+        "suggested_defaults": {
+            "model": {"primary": "doubao-seed/doubao-seed-code"},
+        },
+    },
+    {
+        "id": "xiaomi-mimo",
+        "name": "Xiaomi MiMo",
+        "category": "cn_official",
+        "website_url": "https://xiaomimiai.github.io",
+        "icon": "mimo",
+        "icon_color": None,
+        "settings_config": {
+            "baseUrl": "https://api.maimiao.com/v1",
+            "apiKey": "",
+            "api": "openai-completions",
+            "models": [
+                {"id": "mimo-v2-flash", "name": "MiMo V2 Flash"},
+                {"id": "mimo-v2-pro", "name": "MiMo V2 Pro"},
+            ],
+        },
+        "suggested_defaults": {
+            "model": {"primary": "xiaomi-mimo/mimo-v2-flash"},
+        },
+    },
+    {
+        "id": "siliconflow",
+        "name": "SiliconFlow",
+        "category": "aggregator",
+        "website_url": "https://cloud.siliconflow.cn",
+        "icon": "siliconflow",
+        "icon_color": None,
+        "settings_config": {
+            "baseUrl": "https://api.siliconflow.cn/v1",
+            "apiKey": "",
+            "api": "openai-completions",
+            "models": [],
+        },
+        "suggested_defaults": None,
+    },
+    {
+        "id": "openrouter",
+        "name": "OpenRouter",
+        "category": "aggregator",
+        "website_url": "https://openrouter.ai",
+        "icon": "openrouter",
+        "icon_color": None,
+        "settings_config": {
+            "baseUrl": "https://openrouter.ai/api/v1",
+            "apiKey": "",
+            "api": "openai-completions",
+            "models": [],
+        },
+        "suggested_defaults": None,
+    },
+    {
+        "id": "shengsuanyun",
+        "name": "Shengsuanyun",
+        "category": "aggregator",
+        "website_url": "https://www.shengsuanyun.com",
+        "icon": "shengsuanyun",
+        "icon_color": None,
+        "settings_config": {
+            "baseUrl": "https://router.shengsuanyun.com/anthropic",
+            "apiKey": "",
+            "api": "anthropic-messages",
+            "models": [],
+        },
+        "suggested_defaults": None,
+    },
+    {
+        "id": "aihubmix",
+        "name": "AiHubMix",
+        "category": "aggregator",
+        "website_url": "https://aihubmix.com",
+        "icon": "aihubmix",
+        "icon_color": None,
+        "settings_config": {
+            "baseUrl": "https://aihubmix.com/anthropic",
+            "apiKey": "",
+            "api": "anthropic-messages",
+            "models": [],
+        },
+        "suggested_defaults": None,
+    },
+    {
+        "id": "aws-bedrock",
+        "name": "AWS Bedrock",
+        "category": "cloud_provider",
+        "website_url": "https://aws.amazon.com/bedrock",
+        "icon": "aws",
+        "icon_color": "#FF9900",
+        "settings_config": {
+            "baseUrl": "",
+            "apiKey": "",
+            "api": "bedrock-converse-stream",
+            "models": [
+                {"id": "claude-opus-4-7", "name": "Claude Opus 4.7"},
+                {"id": "claude-sonnet-4-6-20260217", "name": "Claude Sonnet 4.6"},
+                {"id": "claude-haiku-4-5-20251001", "name": "Claude Haiku 4.5"},
+            ],
+        },
+        "suggested_defaults": {
+            "model": {"primary": "aws-bedrock/claude-sonnet-4-6-20260217"},
+        },
+    },
+]
