@@ -12,9 +12,6 @@ __pycache__/
 conf/
 *.db
 
-# 本机专用启动脚本（写死本机路径）
-run.bat
-
 # run.sh 运行产物
 *.pid
 *.log

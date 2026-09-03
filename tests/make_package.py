@@ -6,7 +6,7 @@
 
 打包规则:
   - 只包含运行必需文件 + 文档 + 测试; 剔除 cc-switch 参考源码、
-    cc-switch-main.zip、__pycache__、.venv、run.bat(写死本机路径)等
+    cc-switch-main.zip、__pycache__、.venv 等
   - 文件名 UTF-8 + EFS 标志(Linux unzip 正确识别中文文件名)
   - *.sh 写入 Unix 可执行位 0o755, 解压即用无需 chmod
 """
@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 TOP_FILES = [
     "server.py", "storage.py", "db.py", "config_ops.py", "models.py",
-    "requirements.txt", "README.md", "start.sh", "watchdog.sh",
+    "requirements.txt", "README.md", "run.sh", "run.bat", "watchdog.sh",
 ]
 # 开发总结*.md 全部带上（按文件名通配）
 TOP_FILES += [p.name for p in ROOT.glob("开发总结*.md")]

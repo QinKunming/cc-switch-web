@@ -44,7 +44,7 @@ pip install -r requirements.txt
 ```
 
 > **Ubuntu 23.04+ / Debian 12+ 注意**：系统 pip 受 PEP 668 保护，直接安装会报
-> `externally-managed-environment`。改用 venv（Linux 上也可以直接用 `./start.sh start`，
+> `externally-managed-environment`。改用 venv（Linux 上也可以直接用 `./run.sh start`，
 > 脚本会自动建 venv 并装依赖）：
 >
 > ```bash
@@ -52,7 +52,7 @@ pip install -r requirements.txt
 > .venv/bin/pip install -r requirements.txt
 > ```
 >
-> PyPI 直连超时/断流的机器，换国内镜像安装（`start.sh` 同理，见下方方式二）：
+> PyPI 直连超时/断流的机器，换国内镜像安装（`run.sh` 同理，见下方方式二）：
 >
 > ```bash
 > .venv/bin/pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
@@ -137,7 +137,7 @@ CCSW_PORT=9000 ./run.sh restart   # 换端口重启
 
 **方式三：systemd 服务（推荐，自带崩溃自动重启守护）**
 
-1. 先准备 venv（systemd 不走 start.sh，需要先装好依赖）：
+1. 先准备 venv（systemd 不走 run.sh，需要先装好依赖）：
 
 ```bash
 python3 -m venv .venv
@@ -267,7 +267,8 @@ cc-switch-web/
     smoke.py            # 端到端冒烟（沙箱 home，9 智能体全量）
     frontend_logic_test.js  # 前端表单收集逻辑测试（node）
   requirements.txt
-  start.sh             # Linux 后台管理（自动建 venv + 后台启动/停止/重启/看日志）
+  run.sh               # Linux 后台管理（自动建 venv + 后台启动/停止/重启/看日志）
+  run.bat              # Windows 一键启动（自动定位脚本目录，双击即可）
   watchdog.sh          # 看门狗（进程死亡/假死时自动拉起，可配合 systemd 用）
 ```
 

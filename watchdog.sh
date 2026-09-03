@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# cc-switch-web 看门狗：进程死掉或 /api/health 无响应时，立即通过 start.sh 拉起服务。
+# cc-switch-web 看门狗：进程死掉或 /api/health 无响应时，立即通过 run.sh 拉起服务。
 #
 # 适用场景：没有 systemd 的环境（WSL1、部分容器），或想在 systemd 之外
 # 额外加一层"健康探测"（systemd 只能感知进程退出，感知不到进程假死）。
@@ -11,7 +11,7 @@
 #   pkill -f watchdog.sh
 #
 # 可用环境变量:
-#   CCSW_PORT            服务端口（默认 8787，须与 start.sh 一致）
+#   CCSW_PORT            服务端口（默认 8787，须与 run.sh 一致）
 #   CCSW_WATCH_INTERVAL  探测间隔秒数（默认 10）
 set -u
 
@@ -36,12 +36,12 @@ except Exception:
 echo "$(now) [watchdog] 启动，每 ${INTERVAL}s 探测一次: $URL"
 
 while true; do
-  if ! "$APP_DIR/start.sh" status >/dev/null 2>&1; then
+  if ! "$APP_DIR/run.sh" status >/dev/null 2>&1; then
     echo "$(now) [watchdog] 进程不在运行 -> start"
-    "$APP_DIR/start.sh" start
+    "$APP_DIR/run.sh" start
   elif ! health_ok; then
     echo "$(now) [watchdog] 健康检查失败（进程疑似假死）-> restart"
-    "$APP_DIR/start.sh" restart
+    "$APP_DIR/run.sh" restart
   fi
   sleep "$INTERVAL"
 done

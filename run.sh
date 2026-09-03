@@ -2,19 +2,19 @@
 # cc-switch-web 后台服务管理脚本（Ubuntu / Linux / macOS）
 #
 # 用法:
-#   ./start.sh            # 等同于 start
-#   ./start.sh start      # 首次自动建 venv + 装依赖，后台启动
-#   ./start.sh stop       # 停止
-#   ./start.sh restart    # 重启
-#   ./start.sh status     # 查看运行状态
-#   ./start.sh log [N]    # 查看最近 N 行日志（默认 50）
+#   ./run.sh            # 等同于 start
+#   ./run.sh start      # 首次自动建 venv + 装依赖，后台启动
+#   ./run.sh stop       # 停止
+#   ./run.sh restart    # 重启
+#   ./run.sh status     # 查看运行状态
+#   ./run.sh log [N]    # 查看最近 N 行日志（默认 50）
 #
 # 可用环境变量覆盖:
 #   CCSW_HOST       监听地址，默认 0.0.0.0
 #   CCSW_PORT       监听端口，默认 8787
 #   CCSW_PIP_INDEX  pip 镜像源（弱网/PyPI 直连超时时用，如清华/阿里云源）
-#   例: CCSW_PORT=9000 ./start.sh restart
-#       CCSW_PIP_INDEX=https://pypi.tuna.tsinghua.edu.cn/simple ./start.sh start
+#   例: CCSW_PORT=9000 ./run.sh restart
+#       CCSW_PIP_INDEX=https://pypi.tuna.tsinghua.edu.cn/simple ./run.sh start
 set -u
 
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -50,7 +50,7 @@ ensure_env() {
     if [ "$ok" -ne 0 ]; then
       echo "[ccsw] 错误: 依赖安装失败（已重试 3 次）"
       echo "[ccsw] 提示: PyPI 直连超时可改用国内镜像，例如:"
-      echo "[ccsw]   CCSW_PIP_INDEX=https://pypi.tuna.tsinghua.edu.cn/simple ./start.sh start"
+      echo "[ccsw]   CCSW_PIP_INDEX=https://pypi.tuna.tsinghua.edu.cn/simple ./run.sh start"
       exit 1
     fi
     cp "$APP_DIR/requirements.txt" "$STAMP_FILE"
