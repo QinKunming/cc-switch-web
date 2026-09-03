@@ -4,8 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CC Switch Web</title>
+<script>/* apply saved theme before first paint to avoid FOUC */
+document.documentElement.dataset.theme = localStorage.getItem('ccsw-theme') || 'dark';</script>
 <style>
 :root{--bg:#0f1117;--surface:#1a1d27;--surface2:#232635;--border:#2e3245;--text:#e4e6f0;--text2:#8b8fa3;--primary:#6c5ce7;--primary-hover:#7c6ff7;--success:#00b894;--danger:#e74c3c;--danger-hover:#c0392b;--warning:#fdcb6e}
+html[data-theme="light"]{--bg:#f5f6fa;--surface:#fff;--surface2:#eef0f6;--border:#d9dce7;--text:#1c1f2b;--text2:#5b6070;--primary:#6c5ce7;--primary-hover:#5a4bd1;--success:#00a381;--danger:#d63031;--danger-hover:#b02a2b;--warning:#8a6d0b}
+html[data-theme="light"] .provider-card.current{background:rgba(0,163,129,.06)}
+html[data-theme="light"] .badge.current{background:rgba(0,163,129,.15)}
+html[data-theme="light"] .badge.cat-official{background:rgba(108,92,231,.12)}
+html[data-theme="light"] .modal-overlay{background:rgba(0,0,0,.35)}
+html[data-theme="light"] .model-dropdown{box-shadow:0 8px 24px rgba(0,0,0,.12)}
+html[data-theme="light"] .agent-badge-new{color:#fff}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);height:100vh}
 a{color:var(--primary);text-decoration:none}
@@ -184,6 +193,7 @@ a{color:var(--primary);text-decoration:none}
     <span id="statusCurrent" class="current-info">Loading...</span>
     <span style="flex:1"></span>
     <span style="font-size:12px;color:var(--text2)" id="networkInfo"></span>
+    <button class="logout-btn" id="themeToggle" title="Toggle light/dark theme" onclick="toggleTheme()">☀️</button>
     <button class="logout-btn" onclick="doLogout()">Logout</button>
   </div>
 
@@ -387,21 +397,93 @@ async function loadProviders() {
   }
 }
 
+const metaSpan = (icon, text) => text ? `<span>${icon} ${text}</span>` : '';
+const CARD_META = {
+  claude: p => {
+    const env = p.settings_config?.env || {};
+    return [
+      metaSpan('🌐', env.ANTHROPIC_BASE_URL && truncate(env.ANTHROPIC_BASE_URL, 40)),
+      metaSpan('🧠', env.ANTHROPIC_MODEL && esc(env.ANTHROPIC_MODEL)),
+      metaSpan('🔑', env.ANTHROPIC_AUTH_TOKEN && truncate(env.ANTHROPIC_AUTH_TOKEN, 12)),
+    ];
+  },
+  'claude-desktop': p => {
+    const env = p.settings_config?.env || {};
+    const models = p.settings_config?.inferenceModels || [];
+    return [
+      metaSpan('🌐', env.ANTHROPIC_BASE_URL && truncate(env.ANTHROPIC_BASE_URL, 40)),
+      metaSpan('🧠', models.length && esc(models.join(', '))),
+      metaSpan('🔑', (env.ANTHROPIC_AUTH_TOKEN || env.ANTHROPIC_API_KEY) && truncate(env.ANTHROPIC_AUTH_TOKEN || env.ANTHROPIC_API_KEY, 12)),
+    ];
+  },
+  codex: p => {
+    const sc = p.settings_config || {};
+    const toml = sc.config || '';
+    return [
+      metaSpan('🌐', tomlGet(toml, 'base_url') && truncate(tomlGet(toml, 'base_url'), 40)),
+      metaSpan('🧠', tomlGet(toml, 'model') && esc(tomlGet(toml, 'model'))),
+      metaSpan('🔑', sc.auth?.OPENAI_API_KEY && truncate(sc.auth.OPENAI_API_KEY, 12)),
+    ];
+  },
+  gemini: p => {
+    const env = p.settings_config?.env || {};
+    return [
+      metaSpan('🌐', env.GOOGLE_GEMINI_BASE_URL && truncate(env.GOOGLE_GEMINI_BASE_URL, 40)),
+      metaSpan('🧠', env.GEMINI_MODEL && esc(env.GEMINI_MODEL)),
+      metaSpan('🔑', env.GEMINI_API_KEY && truncate(env.GEMINI_API_KEY, 12)),
+    ];
+  },
+  grokbuild: p => {
+    const toml = p.settings_config?.config || '';
+    const profile = tomlGet(toml, 'default');
+    return [
+      metaSpan('🧠', profile && esc(profile)),
+      metaSpan('🌐', tomlGet(toml, 'base_url') && truncate(tomlGet(toml, 'base_url'), 40)),
+      metaSpan('🔑', tomlGet(toml, 'api_key') && truncate(tomlGet(toml, 'api_key'), 12)),
+    ];
+  },
+  opencode: p => {
+    const sc = p.settings_config || {};
+    const models = (sc.models && typeof sc.models === 'object' && !Array.isArray(sc.models)) ? sc.models : {};
+    return [
+      metaSpan('🌐', sc.options?.baseURL && truncate(sc.options.baseURL, 40)),
+      metaSpan('📦', sc.npm && esc(sc.npm)),
+      metaSpan('🧠', Object.keys(models).length && Object.keys(models).length + ' model(s)'),
+    ];
+  },
+  openclaw: p => {
+    const sc = p.settings_config || {};
+    const models = sc.models || [];
+    return [
+      metaSpan('🌐', sc.baseUrl && truncate(sc.baseUrl, 40)),
+      metaSpan('📡', sc.api && esc(sc.api)),
+      metaSpan('🧠', models.length && models.length + ' model(s)'),
+    ];
+  },
+  hermes: p => {
+    const sc = p.settings_config || {};
+    const models = sc.models || [];
+    return [
+      metaSpan('🌐', sc.base_url && truncate(sc.base_url, 40)),
+      metaSpan('📡', sc.api_mode && esc(sc.api_mode)),
+      metaSpan('🧠', models.length && models.length + ' model(s)'),
+    ];
+  },
+  pi: p => {
+    const sc = p.settings_config || {};
+    const models = sc.models || [];
+    return [
+      metaSpan('🌐', sc.baseUrl && truncate(sc.baseUrl, 40)),
+      metaSpan('📡', sc.api && esc(sc.api)),
+      metaSpan('🧠', models.length && models.length + ' model(s)'),
+    ];
+  },
+};
+
 function renderCard(p, isCurrent) {
   const catBadge = p.category ? `<span class="badge cat-official">${esc(p.category)}</span>` : '';
   const currentBadge = isCurrent ? '<span class="badge current">Active</span>' : '';
-  const meta = [];
-  if (currentApp === 'claude') {
-    const env = p.settings_config?.env || {};
-    if (env.ANTHROPIC_BASE_URL) meta.push(`<span>🌐 ${truncate(env.ANTHROPIC_BASE_URL,40)}</span>`);
-    if (env.ANTHROPIC_MODEL) meta.push(`<span>🧠 ${esc(env.ANTHROPIC_MODEL)}</span>`);
-    if (env.ANTHROPIC_AUTH_TOKEN) meta.push(`<span>🔑 ${truncate(env.ANTHROPIC_AUTH_TOKEN,12)}</span>`);
-  } else {
-    if (p.settings_config?.baseUrl) meta.push(`<span>🌐 ${truncate(p.settings_config.baseUrl,40)}</span>`);
-    if (p.settings_config?.api) meta.push(`<span>📡 ${esc(p.settings_config.api)}</span>`);
-    const models = p.settings_config?.models || [];
-    if (models.length) meta.push(`<span>🧠 ${models.length} model(s)</span>`);
-  }
+  const meta = (CARD_META[currentApp] || CARD_META.openclaw)(p).filter(Boolean);
   const iconBg = p.icon_color || 'var(--primary)';
   return `<div class="provider-card ${isCurrent?'current':''}">
     <div class="p-icon" style="background:${iconBg}22;color:${iconBg}">${(p.name||'?')[0].toUpperCase()}</div>
@@ -440,13 +522,41 @@ async function doDelete(id, name) {
 }
 
 // --- Add/Edit Form ---
+const FORM_BUILDERS = {
+  'claude': { html: claudeFormHtml, collect: collectClaudeFormData },
+  'claude-desktop': { html: cdFormHtml, collect: collectCdFormData },
+  'codex': { html: codexFormHtml, collect: collectCodexFormData },
+  'gemini': { html: geminiFormHtml, collect: collectGeminiFormData },
+  'grokbuild': { html: grokFormHtml, collect: collectGrokFormData },
+  'opencode': { html: opencodeFormHtml, collect: collectOpencodeFormData },
+  'openclaw': { html: openclawFormHtml, collect: collectOpenclawFormData },
+  'hermes': { html: hermesFormHtml, collect: collectHermesFormData },
+  'pi': { html: piFormHtml, collect: collectPiFormData },
+};
+
+let _editModelsRaw = null;  // model id -> stored object, keeps preset extras on edit
+
+function editModelsRaw(p) {
+  const sc = p?.settings_config || {};
+  const map = {};
+  if (currentApp === 'opencode' && sc.models && typeof sc.models === 'object' && !Array.isArray(sc.models)) {
+    Object.entries(sc.models).forEach(([id, m]) => map[id] = m);
+  } else if (Array.isArray(sc.models)) {
+    sc.models.forEach(m => { if (m && m.id) map[m.id] = m; });
+  } else if (Array.isArray(sc.inferenceModels)) {
+    sc.inferenceModels.forEach(id => { if (typeof id === 'string') map[id] = { id }; });
+  }
+  return map;
+}
+
 function showAddForm() {
   editingId = null;
   _cachedModels = null;
   _cachedBaseUrl = '';
+  _editModelsRaw = null;
   document.getElementById('formTitle').textContent = 'Add Provider';
   document.getElementById('formSaveBtn').textContent = 'Add';
-  renderForm(currentApp === 'claude' ? claudeFormHtml() : openclawFormHtml());
+  renderForm(FORM_BUILDERS[currentApp].html(null));
   showModal('formModal');
 }
 
@@ -456,9 +566,10 @@ async function showEditForm(id) {
     editingId = id;
     _cachedModels = null;
     _cachedBaseUrl = '';
+    _editModelsRaw = editModelsRaw(p);
     document.getElementById('formTitle').textContent = 'Edit Provider';
     document.getElementById('formSaveBtn').textContent = 'Save';
-    renderForm(currentApp === 'claude' ? claudeFormHtml(p) : openclawFormHtml(p));
+    renderForm(FORM_BUILDERS[currentApp].html(p));
     showModal('formModal');
   } catch (e) { toast(e.message, 'error'); }
 }
@@ -507,30 +618,362 @@ function openclawFormHtml(p = null) {
       </div>
       <div class="form-group"><label>Category</label><input id="f_category" value="${esc(p?.category||'custom')}"></div>
     </div>
-    <div class="form-group" style="position:relative"><label>Models <button type="button" class="fetch-btn" onclick="fetchAndShowOc()">获取模型</button></label>
-      <div id="modelsContainer">${models.map((m,i)=>modelEntryHtml(m,i)).join('')}</div>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button class="btn btn-outline btn-sm" onclick="addModelEntry()">+ Add Model</button>
-      </div>
-      <div class="model-dropdown" id="dd_oc_models"></div>
-    </div>
+    ${modelsSectionHtml(models, 'openclaw')}
     <div class="form-group"><label>Website</label><input id="f_website" value="${esc(p?.website_url||'')}"></div>`;
 }
 
-function modelEntryHtml(m,i) {
+// --- Shared form helpers ---
+function formHeaderHtml(p) {
+  return `
+    <div class="form-group"><label>Name</label><input id="f_name" value="${esc(p?.name||'')}"></div>
+    <div class="form-group"><label>Provider ID</label><input id="f_id" value="${esc(p?.id||'')}" ${p?'disabled':''}></div>`;
+}
+function formFooterHtml(p) {
+  return `
+    <div class="form-group"><label>Category</label><input id="f_category" value="${esc(p?.category||'custom')}"></div>
+    <div class="form-group"><label>Website</label><input id="f_website" value="${esc(p?.website_url||'')}"></div>`;
+}
+function requireIdName() {
+  const id = document.getElementById('f_id').value.trim();
+  const name = document.getElementById('f_name').value.trim();
+  if (!id || !name) throw new Error('ID and Name are required');
+  return { id, name };
+}
+function collectTail() {
+  return {
+    category: document.getElementById('f_category').value.trim()||null,
+    website_url: document.getElementById('f_website').value.trim()||null,
+  };
+}
+
+// --- TOML text helpers (line-level get/set for codex / grokbuild configs) ---
+function tomlGet(text, key) {
+  const m = (text||'').match(new RegExp('^\\s*' + key + '\\s*=\\s*"([^"]*)"', 'm'));
+  return m ? m[1] : '';
+}
+function tomlGetInt(text, key) {
+  const m = (text||'').match(new RegExp('^\\s*' + key + '\\s*=\\s*(\\d+)', 'm'));
+  return m ? parseInt(m[1]) : null;
+}
+function tomlSet(text, key, value) {
+  const quoted = (value === 'true' || value === 'false') ? value : '"' + value + '"';
+  const re = new RegExp('^(\\s*' + key + '\\s*=\\s*)("[^"]*"|true|false)$', 'm');
+  if (re.test(text)) return text.replace(re, (m, p1) => p1 + quoted);
+  return text;
+}
+// --- Model list entries (per-agent field spec) ---
+const MODEL_FIELDS = {
+  openclaw: { name: true,  cw: 'contextWindow',  out: false },
+  hermes:   { name: true,  cw: 'context_length', out: false },
+  opencode: { name: true,  cw: 'limit',          out: 'limit' },
+  pi:       { name: false, cw: null,             out: false },
+};
+const MODEL_SPEC_BY_APP = {
+  openclaw: 'openclaw', hermes: 'hermes', opencode: 'opencode',
+  pi: 'pi', 'claude-desktop': 'pi',
+};
+function currentModelSpec() { return MODEL_SPEC_BY_APP[currentApp] || 'openclaw'; }
+
+function modelEntryHtml(m, i, specKey = 'openclaw') {
+  const spec = MODEL_FIELDS[specKey];
+  const cwVal = m.contextWindow ?? m.context_length ?? m.limit?.context ?? '';
+  const outVal = m.limit?.output ?? '';
   return `<div class="model-entry" data-idx="${i}">
     <div class="me-header"><span>Model #${i+1}</span><button class="btn btn-danger btn-sm" onclick="this.closest('.model-entry').remove()">Remove</button></div>
     <div class="form-row">
       <div class="form-group"><label>Model ID</label><input class="me-id" value="${esc(m.id||'')}"></div>
-      <div class="form-group"><label>Display Name</label><input class="me-name" value="${esc(m.name||'')}"></div>
+      ${spec.name ? `<div class="form-group"><label>Display Name</label><input class="me-name" value="${esc(m.name||'')}"></div>` : ''}
     </div>
-    <div class="form-group"><label>Context Window</label><input class="me-cw" type="number" value="${m.contextWindow||''}"></div>
-    </div>`;
+    ${(spec.cw || spec.out) ? `<div class="form-row">
+      ${spec.cw ? `<div class="form-group"><label>Context Window</label><input class="me-cw" type="number" value="${esc(String(cwVal))}"></div>` : ''}
+      ${spec.out ? `<div class="form-group"><label>Output Limit</label><input class="me-out" type="number" value="${esc(String(outVal))}"></div>` : ''}
+    </div>` : ''}
+  </div>`;
 }
 
 function addModelEntry() {
   const c = document.getElementById('modelsContainer');
-  c.insertAdjacentHTML('beforeend', modelEntryHtml({id:'',name:''}, c.children.length));
+  c.insertAdjacentHTML('beforeend', modelEntryHtml({id:'',name:''}, c.children.length, currentModelSpec()));
+}
+
+function modelsSectionHtml(models, specKey) {
+  const entries = (models && models.length ? models : [{}]).map((m,i) => modelEntryHtml(m, i, specKey)).join('');
+  return `<div class="form-group" style="position:relative"><label>Models <button type="button" class="fetch-btn" onclick="fetchAndShowModels()">获取模型</button></label>
+      <div id="modelsContainer">${entries}</div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-outline btn-sm" onclick="addModelEntry()">+ Add Model</button>
+      </div>
+      <div class="model-dropdown" id="dd_oc_models"></div>
+    </div>`;
+}
+
+function collectModelEntries(specKey) {
+  const spec = MODEL_FIELDS[specKey];
+  const out = [];
+  document.querySelectorAll('.model-entry').forEach(el => {
+    const mid = el.querySelector('.me-id').value.trim();
+    if (!mid) return;
+    let m = { id: mid };
+    if (spec.name) {
+      const n = el.querySelector('.me-name')?.value.trim();
+      if (n) m.name = n;
+    }
+    const cw = parseInt(el.querySelector('.me-cw')?.value);
+    const o = parseInt(el.querySelector('.me-out')?.value);
+    if (specKey === 'opencode') {
+      if (cw || o) m.limit = { ...(cw ? {context: cw} : {}), ...(o ? {output: o} : {}) };
+    } else if (spec.cw && cw) {
+      m[spec.cw] = cw;
+    }
+    // keep stored extras (compat / thinkingLevelMap / limits from presets)
+    const prev = _editModelsRaw?.[mid];
+    if (prev && typeof prev === 'object') m = Object.assign({}, JSON.parse(JSON.stringify(prev)), m);
+    out.push(m);
+  });
+  return out;
+}
+
+// --- Claude Desktop ---
+function cdFormHtml(p = null) {
+  const sc = p?.settings_config || {};
+  const env = sc.env || {};
+  const keyField = env.ANTHROPIC_AUTH_TOKEN ? 'ANTHROPIC_AUTH_TOKEN'
+    : (env.ANTHROPIC_API_KEY ? 'ANTHROPIC_API_KEY' : 'ANTHROPIC_AUTH_TOKEN');
+  const models = (sc.inferenceModels || []).map(id => ({ id }));
+  return `
+    ${formHeaderHtml(p)}
+    <input type="hidden" id="f_key_field" value="${keyField}">
+    <div class="form-row">
+      <div class="form-group"><label>Base URL</label><input id="f_base_url" value="${esc(env.ANTHROPIC_BASE_URL||'')}" placeholder="https://api.example.com"></div>
+      <div class="form-group"><label>API Key (Bearer)</label><input id="f_api_key" type="password" value="${esc(env[keyField]||'')}" placeholder="sk-..."></div>
+    </div>
+    ${modelsSectionHtml(models, 'pi')}
+    <div class="form-group" style="font-size:12px;color:var(--text2)">模型名须形如 claude-sonnet-* / claude-opus-* / claude-haiku-* / claude-fable-*（Claude Desktop 白名单校验）。</div>
+    ${formFooterHtml(p)}`;
+}
+function collectCdFormData() {
+  const { id, name } = requireIdName();
+  const env = {};
+  const baseUrl = document.getElementById('f_base_url').value.trim();
+  const apiKey = document.getElementById('f_api_key').value;
+  if (baseUrl) env.ANTHROPIC_BASE_URL = baseUrl;
+  const keyField = document.getElementById('f_key_field')?.value || 'ANTHROPIC_AUTH_TOKEN';
+  if (apiKey) env[keyField] = apiKey;
+  const config = { env };
+  const models = collectModelEntries('pi').map(m => m.id);
+  if (models.length) config.inferenceModels = models;
+  return { id, name, settings_config: config, ...collectTail() };
+}
+
+// --- Codex ---
+const CODEX_TOML_TEMPLATE = 'model_provider = "custom"\nmodel = ""\nmodel_reasoning_effort = "high"\ndisable_response_storage = true\n\n[model_providers.custom]\nname = ""\nbase_url = ""\nwire_api = "responses"\nrequires_openai_auth = true\n';
+
+function codexFormHtml(p = null) {
+  const sc = p?.settings_config || {};
+  const toml = sc.config || CODEX_TOML_TEMPLATE;
+  const drs = /^disable_response_storage\s*=\s*true/m.test(toml);
+  const effort = tomlGet(toml, 'model_reasoning_effort') || 'high';
+  return `
+    ${formHeaderHtml(p)}
+    <div class="form-row">
+      <div class="form-group"><label>Base URL</label><input id="f_base_url" value="${esc(tomlGet(toml,'base_url'))}" placeholder="https://api.example.com/v1"></div>
+      <div class="form-group"><label>API Key</label><input id="f_api_key" type="password" value="${esc(sc.auth?.OPENAI_API_KEY||'')}" placeholder="sk-..."></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Model <button type="button" class="fetch-btn" onclick="fetchAndShow('f_model')">获取</button></label><div class="input-dd-wrap"><input id="f_model" value="${esc(tomlGet(toml,'model'))}" placeholder="gpt-5.2"><div class="model-dropdown" id="dd_f_model"></div></div></div>
+      <div class="form-group"><label>Reasoning Effort</label>
+        <select id="f_effort">${['minimal','low','medium','high'].map(e=>`<option value="${e}" ${effort===e?'selected':''}>${e}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div class="form-group"><label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2)"><input type="checkbox" id="f_drs" style="width:auto" ${drs?'checked':''}> disable_response_storage</label></div>
+    ${formFooterHtml(p)}
+    <div class="form-group"><label>Raw config.toml</label><textarea id="f_raw">${esc(toml)}</textarea></div>`;
+}
+function collectCodexFormData() {
+  const { id, name } = requireIdName();
+  let toml = document.getElementById('f_raw')?.value || CODEX_TOML_TEMPLATE;
+  // baseURL 保存时一律原样，不做任何自动补 /v1 等改动
+  const baseUrl = document.getElementById('f_base_url').value.trim();
+  const model = document.getElementById('f_model').value.trim();
+  const apiKey = document.getElementById('f_api_key').value;
+  if (baseUrl) toml = tomlSet(toml, 'base_url', baseUrl);
+  if (model) toml = tomlSet(toml, 'model', model);
+  toml = tomlSet(toml, 'model_reasoning_effort', document.getElementById('f_effort').value);
+  toml = tomlSet(toml, 'disable_response_storage', document.getElementById('f_drs').checked ? 'true' : 'false');
+  if (name) toml = tomlSet(toml, 'name', name);
+  const config = { auth: apiKey ? { OPENAI_API_KEY: apiKey } : {}, config: toml };
+  return { id, name, settings_config: config, ...collectTail() };
+}
+
+// --- Gemini ---
+function geminiFormHtml(p = null) {
+  const env = p?.settings_config?.env || {};
+  return `
+    ${formHeaderHtml(p)}
+    <div class="form-row">
+      <div class="form-group"><label>Base URL</label><input id="f_base_url" value="${esc(env.GOOGLE_GEMINI_BASE_URL||'')}" placeholder="https://api.example.com（官方留空）"></div>
+      <div class="form-group"><label>API Key</label><input id="f_api_key" type="password" value="${esc(env.GEMINI_API_KEY||env.GOOGLE_API_KEY||'')}" placeholder="AIza..."></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Model <button type="button" class="fetch-btn" onclick="fetchAndShow('f_model')">获取</button></label><div class="input-dd-wrap"><input id="f_model" value="${esc(env.GEMINI_MODEL||'')}" placeholder="gemini-3.6-flash"><div class="model-dropdown" id="dd_f_model"></div></div></div>
+      <div class="form-group"><label>Category</label><input id="f_category" value="${esc(p?.category||'custom')}"></div>
+    </div>
+    <div class="form-group"><label>Website</label><input id="f_website" value="${esc(p?.website_url||'')}"></div>`;
+}
+function collectGeminiFormData() {
+  const { id, name } = requireIdName();
+  const env = {};
+  const baseUrl = document.getElementById('f_base_url').value.trim();
+  const apiKey = document.getElementById('f_api_key').value;
+  const model = document.getElementById('f_model').value.trim();
+  if (baseUrl) env.GOOGLE_GEMINI_BASE_URL = baseUrl;
+  if (apiKey) env.GEMINI_API_KEY = apiKey;
+  if (model) env.GEMINI_MODEL = model;
+  return { id, name, settings_config: { env }, ...collectTail() };
+}
+
+// --- Grok Build ---
+function grokFormHtml(p = null) {
+  const toml = p?.settings_config?.config || '';
+  const backend = tomlGet(toml, 'api_backend') || 'responses';
+  const cw = tomlGetInt(toml, 'context_window') || 500000;
+  return `
+    ${formHeaderHtml(p)}
+    <div class="form-row">
+      <div class="form-group"><label>Profile（客户端模型名）</label><input id="f_profile" value="${esc(tomlGet(toml,'default'))}" placeholder="grok-4.5"></div>
+      <div class="form-group"><label>API Backend</label>
+        <select id="f_backend">
+          <option value="responses" ${backend!=='chat'?'selected':''}>responses</option>
+          <option value="chat" ${backend==='chat'?'selected':''}>chat</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Base URL</label><input id="f_base_url" value="${esc(tomlGet(toml,'base_url'))}" placeholder="https://api.x.ai/v1"></div>
+      <div class="form-group"><label>API Key</label><input id="f_api_key" type="password" value="${esc(tomlGet(toml,'api_key'))}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Upstream Model <button type="button" class="fetch-btn" onclick="fetchAndShow('f_model')">获取</button></label><div class="input-dd-wrap"><input id="f_model" value="${esc(tomlGet(toml,'model'))}" placeholder="grok-4.5"><div class="model-dropdown" id="dd_f_model"></div></div></div>
+      <div class="form-group"><label>Context Window</label><input id="f_cw" type="number" value="${cw}"></div>
+    </div>
+    ${formFooterHtml(p)}`;
+}
+function collectGrokFormData() {
+  const { id, name } = requireIdName();
+  const profile = document.getElementById('f_profile').value.trim();
+  const model = document.getElementById('f_model').value.trim();
+  // baseURL 保存时一律原样，不做任何自动补 /v1 等改动
+  const baseUrl = document.getElementById('f_base_url').value.trim();
+  const apiKey = document.getElementById('f_api_key').value;
+  const backend = document.getElementById('f_backend').value;
+  const cw = parseInt(document.getElementById('f_cw').value) || 500000;
+  if (!profile || !model || !baseUrl) throw new Error('Profile, Model and Base URL are required');
+  const toml = `[models]\ndefault = "${profile}"\n\n[model."${profile}"]\nmodel = "${model}"\nbase_url = "${baseUrl}"\nname = "${name}"\napi_key = "${apiKey}"\napi_backend = "${backend}"\ncontext_window = ${cw}\n`;
+  return { id, name, settings_config: { config: toml }, ...collectTail() };
+}
+
+// --- OpenCode ---
+const OPENCODE_NPM = ['@ai-sdk/openai-compatible','@ai-sdk/anthropic','@ai-sdk/openai','@ai-sdk/google','@ai-sdk/deepseek','openrouter'];
+function opencodeFormHtml(p = null) {
+  const sc = p?.settings_config || {};
+  const models = (sc.models && typeof sc.models === 'object' && !Array.isArray(sc.models))
+    ? Object.entries(sc.models).map(([id, m]) => Object.assign({ id }, m||{})) : [];
+  return `
+    ${formHeaderHtml(p)}
+    <div class="form-row">
+      <div class="form-group"><label>Base URL</label><input id="f_base_url" value="${esc(sc.options?.baseURL||'')}" placeholder="https://api.example.com/v1"></div>
+      <div class="form-group"><label>API Key</label><input id="f_api_key" type="password" value="${esc(sc.options?.apiKey||'')}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>npm Package</label><input id="f_npm" list="npm_list" value="${esc(sc.npm||'@ai-sdk/openai-compatible')}">
+        <datalist id="npm_list">${OPENCODE_NPM.map(n=>`<option value="${n}">`).join('')}</datalist>
+      </div>
+      <div class="form-group"><label>Display Name</label><input id="f_display" value="${esc(sc.name||'')}"></div>
+    </div>
+    ${modelsSectionHtml(models, 'opencode')}
+    ${formFooterHtml(p)}`;
+}
+function collectOpencodeFormData() {
+  const { id, name } = requireIdName();
+  const config = {
+    npm: document.getElementById('f_npm').value.trim() || '@ai-sdk/openai-compatible',
+    name: document.getElementById('f_display').value.trim() || name,
+    options: {
+      baseURL: document.getElementById('f_base_url').value.trim(),
+      apiKey: document.getElementById('f_api_key').value,
+    },
+    models: {},
+  };
+  collectModelEntries('opencode').forEach(m => {
+    const { id: mid, ...rest } = m;
+    const prev = _editModelsRaw?.[mid] || {};
+    const merged = Object.assign({}, JSON.parse(JSON.stringify(prev)), rest);
+    delete merged.id;
+    config.models[mid] = merged;
+  });
+  return { id, name, settings_config: config, ...collectTail() };
+}
+
+// --- Hermes ---
+function hermesFormHtml(p = null) {
+  const sc = p?.settings_config || {};
+  const modes = ['chat_completions','anthropic_messages','openai_completions','openai_responses','google_generative_ai'];
+  return `
+    ${formHeaderHtml(p)}
+    <div class="form-row">
+      <div class="form-group"><label>Base URL</label><input id="f_base_url" value="${esc(sc.base_url||'')}" placeholder="https://api.example.com/v1"></div>
+      <div class="form-group"><label>API Key</label><input id="f_api_key" type="password" value="${esc(sc.api_key||'')}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>API Mode</label>
+        <select id="f_api">${modes.map(v=>`<option value="${v}" ${sc.api_mode===v?'selected':''}>${v}</option>`).join('')}</select>
+      </div>
+      <div class="form-group"><label>Category</label><input id="f_category" value="${esc(p?.category||'custom')}"></div>
+    </div>
+    ${modelsSectionHtml(sc.models||[], 'hermes')}
+    <div class="form-group"><label>Website</label><input id="f_website" value="${esc(p?.website_url||'')}"></div>`;
+}
+function collectHermesFormData() {
+  const { id, name } = requireIdName();
+  const config = {
+    name: id,  // Hermes entries are keyed by provider id (backend overrides)
+    base_url: document.getElementById('f_base_url').value.trim(),
+    api_key: document.getElementById('f_api_key').value,
+    api_mode: document.getElementById('f_api').value,
+    models: collectModelEntries('hermes'),
+  };
+  return { id, name, settings_config: config, ...collectTail() };
+}
+
+// --- Pi ---
+function piFormHtml(p = null) {
+  const sc = p?.settings_config || {};
+  const protos = ['openai-completions','openai-responses','anthropic-messages','google-generative-ai'];
+  return `
+    ${formHeaderHtml(p)}
+    <div class="form-row">
+      <div class="form-group"><label>Base URL</label><input id="f_base_url" value="${esc(sc.baseUrl||'')}" placeholder="https://api.example.com/v1"></div>
+      <div class="form-group"><label>API Key</label><input id="f_api_key" type="password" value="${esc(sc.apiKey||'')}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>API Protocol</label>
+        <select id="f_api">${protos.map(v=>`<option value="${v}" ${sc.api===v?'selected':''}>${v}</option>`).join('')}</select>
+      </div>
+      <div class="form-group"><label>Display Name</label><input id="f_display" value="${esc(sc.name||'')}"></div>
+    </div>
+    ${modelsSectionHtml(sc.models||[], 'pi')}
+    ${formFooterHtml(p)}`;
+}
+function collectPiFormData() {
+  const { id, name } = requireIdName();
+  const config = {
+    name: document.getElementById('f_display').value.trim() || name,
+    baseUrl: document.getElementById('f_base_url').value.trim(),
+    api: document.getElementById('f_api').value,
+    apiKey: document.getElementById('f_api_key').value,
+    models: collectModelEntries('pi'),
+  };
+  return { id, name, settings_config: config, ...collectTail() };
 }
 
 function collectClaudeFormData() {
@@ -574,7 +1017,7 @@ function collectOpenclawFormData() {
 
 async function saveProvider() {
   try {
-    const data = currentApp === 'claude' ? collectClaudeFormData() : collectOpenclawFormData();
+    const data = FORM_BUILDERS[currentApp].collect();
     if (editingId) {
       await api(`/api/providers/${editingId}?app=${currentApp}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
       toast('Updated', 'success');
@@ -587,6 +1030,13 @@ async function saveProvider() {
 }
 
 // --- Model Fetch ---
+// 下拉框锚在 Models 组底部（top:100%），在滚动弹窗里可能落在可视区外，
+// 显示时统一滚入视野，避免"点了获取没反应"（下拉其实开在屏幕外）。
+function revealDropdown(dd) {
+  dd.classList.add('show');
+  if (dd.scrollIntoView) dd.scrollIntoView({ block: 'nearest' });
+}
+
 async function fetchAndShow(inputId) {
   const baseUrl = document.getElementById('f_base_url')?.value?.trim();
   const apiKey = document.getElementById('f_api_key')?.value?.trim();
@@ -597,7 +1047,7 @@ async function fetchAndShow(inputId) {
   document.querySelectorAll('.model-dropdown.show').forEach(d => { if (d !== dd) d.classList.remove('show'); });
   if (!_cachedModels || _cachedBaseUrl !== baseUrl) {
     dd.innerHTML = '<div class="model-dropdown-empty">Loading...</div>';
-    dd.classList.add('show');
+    revealDropdown(dd);
     try {
       const r = await api('/api/fetch-models', {
         method: 'POST',
@@ -608,21 +1058,22 @@ async function fetchAndShow(inputId) {
       _cachedBaseUrl = baseUrl;
     } catch (e) {
       dd.innerHTML = '<div class="model-dropdown-empty">' + esc(e.message) + '</div>';
+      if (dd.scrollIntoView) dd.scrollIntoView({ block: 'nearest' });
       return;
     }
   }
   if (!_cachedModels.length) {
     dd.innerHTML = '<div class="model-dropdown-empty">No models found</div>';
-    dd.classList.add('show');
+    revealDropdown(dd);
     return;
   }
   dd.innerHTML = _cachedModels.map((m, i) =>
     '<div class="model-dropdown-item" data-idx="' + i + '" data-target="' + inputId + '">' + esc(m) + '</div>'
   ).join('');
-  dd.classList.add('show');
+  revealDropdown(dd);
 }
 
-async function fetchAndShowOc() {
+async function fetchAndShowModels() {
   const baseUrl = document.getElementById('f_base_url')?.value?.trim();
   const apiKey = document.getElementById('f_api_key')?.value?.trim();
   if (!baseUrl || !apiKey) { toast('请先填写 Base URL 和 API Key', 'error'); return; }
@@ -632,7 +1083,7 @@ async function fetchAndShowOc() {
   document.querySelectorAll('.model-dropdown.show').forEach(d => { if (d !== dd) d.classList.remove('show'); });
   if (!_cachedModels || _cachedBaseUrl !== baseUrl) {
     dd.innerHTML = '<div class="model-dropdown-empty">Loading...</div>';
-    dd.classList.add('show');
+    revealDropdown(dd);
     try {
       const r = await api('/api/fetch-models', {
         method: 'POST',
@@ -643,8 +1094,14 @@ async function fetchAndShowOc() {
       _cachedBaseUrl = baseUrl;
     } catch (e) {
       dd.innerHTML = '<div class="model-dropdown-empty">' + esc(e.message) + '</div>';
+      if (dd.scrollIntoView) dd.scrollIntoView({ block: 'nearest' });
       return;
     }
+  }
+  if (!_cachedModels.length) {
+    dd.innerHTML = '<div class="model-dropdown-empty">No models found</div>';
+    revealDropdown(dd);
+    return;
   }
   const existing = new Set();
   document.querySelectorAll('.model-entry .me-id').forEach(el => { const v = el.value.trim(); if (v) existing.add(v); });
@@ -652,7 +1109,12 @@ async function fetchAndShowOc() {
     const added = existing.has(m);
     return '<div class="model-dropdown-item" data-idx="' + i + '" data-target="oc"' + (added ? ' style="opacity:.4"' : '') + '>' + esc(m) + (added ? ' (added)' : '') + '</div>';
   }).join('');
-  dd.classList.add('show');
+  revealDropdown(dd);
+}
+
+function addFetchedModel(id) {
+  const c = document.getElementById('modelsContainer');
+  c.insertAdjacentHTML('beforeend', modelEntryHtml({id, name: ''}, c.children.length, currentModelSpec()));
 }
 
 document.addEventListener('click', e => {
@@ -662,8 +1124,7 @@ document.addEventListener('click', e => {
     const target = item.dataset.target;
     if (idx >= 0 && idx < _cachedModels.length) {
       if (target === 'oc') {
-        const c = document.getElementById('modelsContainer');
-        c.insertAdjacentHTML('beforeend', modelEntryHtml({id: _cachedModels[idx], name: ''}, c.children.length));
+        addFetchedModel(_cachedModels[idx]);
         item.style.opacity = '.4';
         item.textContent = _cachedModels[idx] + ' (added)';
       } else {
@@ -734,7 +1195,20 @@ document.addEventListener('keydown', e => {
   }
 });
 
+// --- Theme ---
+function applyThemeLabel() {
+  const btn = document.getElementById('themeToggle');
+  if (btn) btn.textContent = document.documentElement.dataset.theme === 'light' ? '🌙' : '☀️';
+}
+function toggleTheme() {
+  const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+  document.documentElement.dataset.theme = next;
+  localStorage.setItem('ccsw-theme', next);
+  applyThemeLabel();
+}
+
 // --- Bootstrap ---
+applyThemeLabel();
 checkAuth();
 </script>
 </body>

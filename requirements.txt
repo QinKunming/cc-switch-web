@@ -1,3 +1,10 @@
+# cc-switch-web v2.0.0 runtime dependencies
+# Requires Python 3.11+ (stdlib tomllib). Everything else used is stdlib
+# (sqlite3 / json / hashlib / tomllib / urllib / ...).
+# NOTE: keep this file ASCII-only -- pip decodes it with the locale codec
+# (e.g. GBK on zh-CN Windows) when there is no BOM.
 fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
+pydantic>=2.5.0
 json5>=0.9.0
+PyYAML>=6.0

@@ -35,7 +35,8 @@ _CREATE_SETTINGS = """CREATE TABLE IF NOT EXISTS settings (
 class Database:
     def __init__(self, db_path: Optional[Path] = None):
         if db_path is None:
-            db_path = Path.home() / ".cc-switch" / "cc-switch.db"
+            from storage import get_db_path
+            db_path = get_db_path()
         self.db_path = db_path
         self._lock = threading.Lock()
         self._init_db()

@@ -1,0 +1,331 @@
+"""Hermes provider presets (converted from cc-switch TypeScript).
+
+Source of truth: cc-switch/src/config/hermesProviderPresets.ts
+Hermes stores providers as `custom_providers` entries in config.yaml; the
+settings payload uses snake_case keys (name/base_url/api_key/api_mode/models).
+Each entry here mirrors the TS preset minus Hermes-specific metadata
+(suggestedDefaults, templateValues, partner promotion, themes).
+"""
+
+HERMES_PRESETS = [
+    {
+        "id": "kimi",
+        "name": "Kimi",
+        "category": "cn_official",
+        "website_url": "https://platform.kimi.com?aff=cc-switch",
+        "icon": "kimi",
+        "icon_color": "#6366F1",
+        "settings_config": {
+            "name": "kimi",
+            "base_url": "https://api.moonshot.cn/v1",
+            "api_key": "",
+            "api_mode": "chat_completions",
+            "models": [
+                {"id": "kimi-k2.7-code", "name": "Kimi K2.7 Code", "context_length": 262144},
+                {"id": "kimi-k3", "name": "Kimi K3", "context_length": 1048576},
+            ],
+        },
+    },
+    {
+        "id": "kimi-for-coding",
+        "name": "Kimi For Coding",
+        "category": "cn_official",
+        "website_url": "https://www.kimi.com/code/?aff=cc-switch",
+        "icon": "kimi",
+        "icon_color": "#6366F1",
+        "settings_config": {
+            "name": "kimi_coding",
+            "base_url": "https://api.kimi.com/coding/",
+            "api_key": "",
+            "api_mode": "anthropic_messages",
+            "models": [
+                {"id": "kimi-for-coding", "name": "Kimi For Coding", "context_length": 262144},
+            ],
+        },
+    },
+    {
+        "id": "deepseek",
+        "name": "DeepSeek",
+        "category": "cn_official",
+        "website_url": "https://platform.deepseek.com",
+        "icon": "deepseek",
+        "icon_color": "#4D6BFE",
+        "settings_config": {
+            "name": "deepseek",
+            "base_url": "https://api.deepseek.com",
+            "api_key": "",
+            "api_mode": "chat_completions",
+            "models": [
+                {"id": "deepseek-v4-pro", "name": "DeepSeek V4 Pro", "context_length": 1000000},
+                {"id": "deepseek-v4-flash", "name": "DeepSeek V4 Flash", "context_length": 1000000},
+            ],
+        },
+    },
+    {
+        "id": "zhipu-glm",
+        "name": "Zhipu GLM",
+        "category": "cn_official",
+        "website_url": "https://open.bigmodel.cn",
+        "icon": "zhipu",
+        "icon_color": "#0F62FE",
+        "settings_config": {
+            "name": "zhipu_glm",
+            "base_url": "https://open.bigmodel.cn/api/coding/paas/v4",
+            "api_key": "",
+            "api_mode": "chat_completions",
+            "models": [
+                {"id": "glm-5.1", "name": "GLM-5.1", "context_length": 200000},
+            ],
+        },
+    },
+    {
+        "id": "zhipu-glm-en",
+        "name": "Zhipu GLM en",
+        "category": "cn_official",
+        "website_url": "https://z.ai",
+        "icon": "zhipu",
+        "icon_color": "#0F62FE",
+        "settings_config": {
+            "name": "zhipu_glm_en",
+            "base_url": "https://api.z.ai/api/coding/paas/v4",
+            "api_key": "",
+            "api_mode": "chat_completions",
+            "models": [
+                {"id": "glm-5.1", "name": "GLM-5.1", "context_length": 200000},
+            ],
+        },
+    },
+    {
+        "id": "bailian",
+        "name": "Bailian",
+        "category": "cn_official",
+        "website_url": "https://bailian.console.aliyun.com",
+        "icon": "bailian",
+        "icon_color": "#624AFF",
+        "settings_config": {
+            "name": "bailian",
+            "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+            "api_key": "",
+            "api_mode": "chat_completions",
+            "models": [
+                {"id": "qwen3-coder-plus", "name": "Qwen3 Coder Plus", "context_length": 262144},
+                {"id": "qwen3-max", "name": "Qwen3 Max", "context_length": 262144},
+            ],
+        },
+    },
+    {
+        "id": "bailian-coding",
+        "name": "Bailian For Coding",
+        "category": "cn_official",
+        "website_url": "https://bailian.console.aliyun.com",
+        "icon": "bailian",
+        "icon_color": "#624AFF",
+        "settings_config": {
+            "name": "bailian_coding",
+            "base_url": "https://coding.dashscope.aliyuncs.com/apps/anthropic",
+            "api_key": "",
+            "api_mode": "anthropic_messages",
+            "models": [
+                {"id": "qwen3-coder-plus", "name": "Qwen3 Coder Plus", "context_length": 262144},
+                {"id": "qwen3-max", "name": "Qwen3 Max", "context_length": 262144},
+            ],
+        },
+    },
+    {
+        "id": "qianfan-token-plan",
+        "name": "Baidu Qianfan Token Plan",
+        "category": "cn_official",
+        "website_url": "https://cloud.baidu.com/product/codingplan.html",
+        "icon": "baidu",
+        "icon_color": "#2932E1",
+        "settings_config": {
+            "name": "qianfan_tokenplan",
+            "base_url": "https://qianfan.baidubce.com/v2/tokenplan/personal",
+            "api_key": "",
+            "api_mode": "chat_completions",
+            "models": [
+                {"id": "deepseek-v4-pro", "name": "DeepSeek V4 Pro", "context_length": 1000000},
+                {"id": "deepseek-v4-flash", "name": "DeepSeek V4 Flash", "context_length": 1000000},
+                {"id": "glm-5.2", "name": "GLM-5.2", "context_length": 200000},
+                {"id": "kimi-k2.6", "name": "Kimi K2.6", "context_length": 262144},
+            ],
+        },
+    },
+    {
+        "id": "stepfun",
+        "name": "StepFun",
+        "category": "cn_official",
+        "website_url": "https://platform.stepfun.ai",
+        "icon": "stepfun",
+        "icon_color": "#005AFF",
+        "settings_config": {
+            "name": "stepfun",
+            "base_url": "https://api.stepfun.ai/v1",
+            "api_key": "",
+            "api_mode": "chat_completions",
+            "models": [
+                {"id": "step-3.5-flash", "name": "Step 3.5 Flash"},
+            ],
+        },
+    },
+    {
+        "id": "minimax",
+        "name": "MiniMax",
+        "category": "cn_official",
+        "website_url": "https://platform.minimaxi.com",
+        "icon": "minimax",
+        "icon_color": "#FF6B6B",
+        "settings_config": {
+            "name": "minimax",
+            "base_url": "https://api.minimaxi.com/v1",
+            "api_key": "",
+            "api_mode": "chat_completions",
+            "models": [
+                {"id": "MiniMax-M2.7", "name": "MiniMax M2.7", "context_length": 204800},
+            ],
+        },
+    },
+    {
+        "id": "minimax-en",
+        "name": "MiniMax en",
+        "category": "cn_official",
+        "website_url": "https://platform.minimax.io",
+        "icon": "minimax",
+        "icon_color": "#FF6B6B",
+        "settings_config": {
+            "name": "minimax_en",
+            "base_url": "https://api.minimax.io/v1",
+            "api_key": "",
+            "api_mode": "chat_completions",
+            "models": [
+                {"id": "MiniMax-M2.7", "name": "MiniMax M2.7", "context_length": 204800},
+            ],
+        },
+    },
+    {
+        "id": "volcengine-agent-plan",
+        "name": "火山 Agent Plan",
+        "category": "cn_official",
+        "website_url": "https://www.volcengine.com/activity/agentplan?ac=MMAP8JTTCAQ2&rc=6J6FV5N2&utm_source=OWO&utm_medium=devrel-1&utm_campaign=hw&utm_term=ccswitch&utm_content=hw",
+        "icon": "huoshan",
+        "icon_color": "#3370FF",
+        "settings_config": {
+            "name": "ark_agentplan",
+            "base_url": "https://ark.cn-beijing.volces.com/api/plan",
+            "api_key": "",
+            "api_mode": "anthropic_messages",
+            "models": [
+                {"id": "ark-code-latest", "name": "Ark Code Latest", "context_length": 262144},
+            ],
+        },
+    },
+    {
+        "id": "doubao-seed",
+        "name": "DouBaoSeed",
+        "category": "cn_official",
+        "website_url": "https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey?apikey=%7B%7D&utm_campaign=hw&utm_content=ccswitch&utm_medium=devrel_tool_web&utm_source=OWO&utm_term=ccswitch",
+        "icon": "doubao",
+        "icon_color": "#3370FF",
+        "settings_config": {
+            "name": "doubao_seed",
+            "base_url": "https://ark.cn-beijing.volces.com/api/compatible",
+            "api_key": "",
+            "api_mode": "anthropic_messages",
+            "models": [
+                {"id": "doubao-seed-2-1-pro-260628", "name": "Doubao Seed 2.1 Pro", "context_length": 262144},
+            ],
+        },
+    },
+    {
+        "id": "openrouter",
+        "name": "OpenRouter",
+        "category": "aggregator",
+        "website_url": "https://openrouter.ai",
+        "icon": "openrouter",
+        "icon_color": "#6366F1",
+        "settings_config": {
+            "name": "openrouter",
+            "base_url": "https://openrouter.ai/api/v1",
+            "api_key": "",
+            "api_mode": "chat_completions",
+            "models": [
+                {"id": "anthropic/claude-opus-5", "name": "Claude Opus 5", "context_length": 1000000},
+                {"id": "anthropic/claude-sonnet-5", "name": "Claude Sonnet 5", "context_length": 1000000},
+                {"id": "openai/gpt-5.6-sol", "name": "GPT-5.6 Sol", "context_length": 400000},
+                {"id": "google/gemini-3.6-flash", "name": "Gemini 3.6 Flash", "context_length": 1000000},
+            ],
+        },
+    },
+    {
+        "id": "siliconflow",
+        "name": "SiliconFlow",
+        "category": "aggregator",
+        "website_url": "https://siliconflow.cn",
+        "icon": "siliconflow",
+        "icon_color": "#6E29F6",
+        "settings_config": {
+            "name": "siliconflow",
+            "base_url": "https://api.siliconflow.cn/v1",
+            "api_key": "",
+            "api_mode": "chat_completions",
+            "models": [
+                {"id": "Pro/MiniMaxAI/MiniMax-M2.5", "name": "Pro / MiniMax M2.5", "context_length": 204800},
+            ],
+        },
+    },
+    {
+        "id": "together",
+        "name": "Together AI",
+        "category": "aggregator",
+        "website_url": "https://together.ai",
+        "icon": "together",
+        "icon_color": "#0F6FFF",
+        "settings_config": {
+            "name": "together",
+            "base_url": "https://api.together.xyz/v1",
+            "api_key": "",
+            "api_mode": "chat_completions",
+            "models": [
+                {"id": "Qwen/Qwen3-Coder-480B-A35B-Instruct", "name": "Qwen3 Coder 480B", "context_length": 262144},
+                {"id": "deepseek-ai/DeepSeek-V3.2", "name": "DeepSeek V3.2", "context_length": 64000},
+                {"id": "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8", "name": "Llama 4 Maverick", "context_length": 131072},
+            ],
+        },
+    },
+    {
+        "id": "packycode",
+        "name": "PackyCode",
+        "category": "third_party",
+        "website_url": "https://www.packyapi.ai",
+        "icon": "packycode",
+        "icon_color": None,
+        "settings_config": {
+            "name": "packycode",
+            "base_url": "https://www.packyapi.ai",
+            "api_key": "",
+            "api_mode": "anthropic_messages",
+            "models": [
+                {"id": "claude-opus-5", "name": "Claude Opus 5", "context_length": 1000000},
+                {"id": "claude-sonnet-5", "name": "Claude Sonnet 5", "context_length": 1000000},
+                {"id": "claude-haiku-4-5-20251001", "name": "Claude Haiku 4.5", "context_length": 200000},
+            ],
+        },
+    },
+    {
+        "id": "custom",
+        "name": "Custom Provider",
+        "category": "custom",
+        "website_url": None,
+        "icon": None,
+        "icon_color": None,
+        "settings_config": {
+            "name": "custom",
+            "base_url": "https://api.example.com/v1",
+            "api_key": "",
+            "api_mode": "chat_completions",
+            "models": [
+                {"id": "your-model"},
+            ],
+        },
+    },
+]
